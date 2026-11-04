@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { LiveFeed, classify, compareReadings, nextActiveAt, parseStats, parseStatus } from '../src/js/feed.js';
+import {
+  LiveFeed,
+  classify,
+  compareReadings,
+  measuredAtFor,
+  nextActiveAt,
+  parseStats,
+  parseStatus,
+} from '../src/js/feed.js';
 
 const T0 = Date.parse('2026-11-04T09:40:00.000Z');
 
@@ -63,7 +71,15 @@ test('compareReadings flags an older cached reading instead of counting it', () 
   assert.deepEqual(result, { delta: 0, discontinuity: false, outOfOrder: true });
 });
 
-const input = (overrides) => ({ reading: reading(), failure: null, lastGoodAt: T0, lastMovedAt: null, now: T0, ...overrides });
+const input = (overrides) => ({
+  reading: reading(),
+  failure: null,
+  lastGoodAt: T0,
+  measuredAt: T0,
+  lastMovedAt: null,
+  now: T0,
+  ...overrides,
+});
 
 test('classify: connecting, then stale when the first poll fails', () => {
   assert.equal(classify(input({ reading: null, lastGoodAt: null })).state, 'connecting');
@@ -83,8 +99,51 @@ test('classify: the API saying stale wins over rpm', () => {
 });
 
 test('classify: an old measurement reads as stale before the API says so', () => {
-  const result = classify(input({ reading: reading({ receivedAt: '2026-11-04T09:38:00.000Z' }) }));
+  const old = reading({ receivedAt: '2026-11-04T09:38:00.000Z' });
+  const result = classify(input({ reading: old, measuredAt: measuredAtFor(old, T0) }));
   assert.deepEqual(result, { state: 'stale', reason: 'lag' });
+});
+
+test('classify: a measurement turns stale as it ages, even while polls succeed', () => {
+  assert.equal(classify(input({ lastGoodAt: T0 + 44000, now: T0 + 44000 })).state, 'resting');
+  assert.deepEqual(classify(input({ lastGoodAt: T0 + 46000, now: T0 + 46000 })), { state: 'stale', reason: 'lag' });
+});
+
+test('LiveFeed: refetching the same measurement does not keep it fresh', async () => {
+  let clock = T0;
+  const body = statusBody({ observedAt: '2026-11-04T09:40:00.000Z', receivedAt: '2026-11-04T09:40:00.000Z' });
+  body.generatedAt = '2026-11-04T09:40:00.000Z';
+  const feed = new LiveFeed({
+    onReading: () => {},
+    now: () => clock,
+    fetchImpl: async () => ({ status: 200, ok: true, headers: new Headers(), json: async () => structuredClone(body) }),
+  });
+  for (let elapsed = 0; elapsed <= 90000; elapsed += 2500) {
+    clock = T0 + elapsed;
+    await feed.poll();
+    clearTimeout(feed.timer);
+    const expected = elapsed > 45000 ? 'stale' : 'resting';
+    assert.equal(feed.snapshot().state, expected, `at ${elapsed} ms`);
+  }
+  assert.equal(feed.snapshot().reason, 'lag');
+});
+
+test('LiveFeed: a new measurement resets the age', async () => {
+  let clock = T0;
+  const bodies = [
+    statusBody({ receivedAt: '2026-11-04T09:40:00.000Z' }),
+    statusBody({ observedAt: '2026-11-04T09:40:40.000Z', receivedAt: '2026-11-04T09:40:40.000Z' }),
+  ];
+  bodies.forEach((body) => { body.generatedAt = body.measurement.receivedAt; });
+  const feed = new LiveFeed({ onReading: () => {}, now: () => clock, fetchImpl: fakeFetch(bodies) });
+  await feed.poll();
+  clearTimeout(feed.timer);
+  clock = T0 + 40000;
+  await feed.poll();
+  clearTimeout(feed.timer);
+  // 60 s after the first measurement, but only 20 s after the second.
+  clock = T0 + 60000;
+  assert.equal(feed.snapshot().state, 'resting');
 });
 
 test('classify: one failed poll is tolerated, a long gap is not', () => {

@@ -4,11 +4,12 @@ A browser game where your racer moves only when a real hamster runs. Pick a race
 run, and pass the baton as real accepted wheel passages carry your racer around the rim. It is a
 companion to [SqueekRace Arena](https://squeek-race.vercel.app/).
 
-> **Status: not yet run.** This code has never been executed, in Node or in a browser. The tool
-> that runs commands was unavailable for the whole build, so `dist/` was written by hand as a copy
-> of `src/`. The build, typecheck, tests and browser checks below are ready but have not run.
-> [`VALIDATION.md`](VALIDATION.md) has the full record. Run the commands in
-> [Check the game](#check-the-game) before you publish.
+> **Status: not yet run.** This code has never been executed, in Node or in a browser. In both
+> build rounds the tool that runs commands could not start, and in the second round the browser
+> tool's Chromium also crashed on launch. So `dist/` was written by hand as a copy of `src/`, and
+> no browser test results exist. The build, typecheck, tests and browser walk below are ready but
+> have not run. [`VALIDATION.md`](VALIDATION.md) has the full record and the exact errors. Run the
+> commands in [Check the game](#check-the-game) before you publish.
 
 ## How it plays
 
@@ -18,6 +19,8 @@ companion to [SqueekRace Arena](https://squeek-race.vercel.app/).
 - **Pass the baton in the gold zone.** Passing early locks the baton for 2 seconds. Miss the zone and your racer stops at the line, losing passages until you pass.
 - **Score** is passages used plus baton points.
 - **Each run ends** with a result, a recap of the observed activity and a replay button.
+- **Passages count until the clock reaches zero.** After that the game waits up to 14 seconds for one more reading. It counts that reading only if the device observed it before zero, and the recap reports any passages it left out.
+- **A run with no passages** says the wheel rested only if the feed was fresh the whole time and the finish reading arrived. Otherwise the result is "No passages observed", because a gap in the feed is not evidence that the wheel stopped.
 
 Practice uses a simulated wheel. It is labeled for the whole session and is never saved with live
 results. Live results stay in that browser only, so there is no shared leaderboard.
@@ -41,7 +44,7 @@ everything missed.
 
 - **Wheel running:** `rpmMilli` is above zero, or passages arrived in the last 15 seconds.
 - **Wheel resting:** the feed is fresh and nothing is moving. This is the usual state for much of the day, so the game shows when the wheel is usually busy next.
-- **Feed stale:** the API says `stale`, the latest measurement is over 45 seconds old, or the API has been unreachable for over 20 seconds. Live runs cannot start in this state, and practice stays available.
+- **Feed stale:** the API says `stale`, the latest measurement is over 45 seconds old, or the API has been unreachable for over 20 seconds. Live runs cannot start in this state, and practice stays available. A measurement's age is its reported age (`generatedAt` minus `receivedAt`) when it first arrived, plus the time since. Fetching the same measurement again does not make it fresher.
 
 The readings are signed by the device and are not chain-certified work. The recap says so.
 
@@ -99,15 +102,15 @@ node .imd/reads/skills/design-critic/scripts/taste.mjs --out test/scratch/taste
 
 ## Results
 
-No check has run. See [`VALIDATION.md`](VALIDATION.md).
+No check has run in either build round. See [`VALIDATION.md`](VALIDATION.md) for the errors.
 
 | Check | Result |
 | --- | --- |
-| Production build | Not run |
-| Typecheck | Not run |
-| Unit tests | Not run |
-| Browser tests | Not run, so there are no browser results or screenshots |
-| Design probe | Not run |
+| Production build | Not run. The command tool could not start. |
+| Typecheck | Not run. The command tool could not start. |
+| Unit tests | Not run. The command tool could not start. |
+| Browser tests (Chromium, WebKit) | Not run. The command tool could not start, and the browser tool's Chromium crashed on launch, so there are no browser results or screenshots. |
+| Design probe | Not run, for the same reasons |
 
 ## Project layout
 

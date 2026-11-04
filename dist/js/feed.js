@@ -103,22 +103,38 @@ export function compareReadings(previous, next) {
 }
 
 /**
+ * When the measurement in `reading` reached the API, on this browser's clock. The age the
+ * response itself reports (generatedAt minus receivedAt) is taken off the moment this
+ * measurement was first seen. Using the browser's clock only for elapsed time means a phone
+ * with a wrong clock does not mark a live wheel stale.
+ * @param {Reading} reading
+ * @param {number} seenAt Browser time when this measurement was first fetched.
+ * @returns {number}
+ */
+export function measuredAtFor(reading, seenAt) {
+  const lag = Date.parse(reading.generatedAt) - Date.parse(reading.receivedAt);
+  return seenAt - (Number.isFinite(lag) && lag > 0 ? lag : 0);
+}
+
+/**
  * @param {object} input
  * @param {Reading|null} input.reading
  * @param {Failure|null} input.failure The result of the latest poll, null when it worked.
- * @param {number|null} input.lastGoodAt
+ * @param {number|null} input.lastGoodAt When a poll last succeeded.
+ * @param {number|null} input.measuredAt When the current measurement reached the API, from `measuredAtFor`.
  * @param {number|null} input.lastMovedAt
  * @param {number} input.now
  * @returns {{state:WheelState, reason:StaleReason}}
  */
-export function classify({ reading, failure, lastGoodAt, lastMovedAt, now }) {
+export function classify({ reading, failure, lastGoodAt, measuredAt, lastMovedAt, now }) {
   if (!reading || lastGoodAt === null) {
     return failure ? { state: 'stale', reason: failure } : { state: 'connecting', reason: null };
   }
   if (now - lastGoodAt > LOST_AFTER_MS) return { state: 'stale', reason: failure ?? 'network' };
   if (reading.freshness !== 'online') return { state: 'stale', reason: 'api' };
-  const lag = Date.parse(reading.generatedAt) - Date.parse(reading.receivedAt);
-  if (lag > LAG_STALE_MS) return { state: 'stale', reason: 'lag' };
+  // A successful poll that returns the same measurement again does not make it any newer.
+  const measured = measuredAt ?? measuredAtFor(reading, lastGoodAt);
+  if (now - measured > LAG_STALE_MS) return { state: 'stale', reason: 'lag' };
   const movedRecently = lastMovedAt !== null && now - lastMovedAt < MOVING_FOR_MS;
   if (reading.rpmMilli > 0 || movedRecently) return { state: 'running', reason: null };
   return { state: 'resting', reason: null };
@@ -153,6 +169,8 @@ export class LiveFeed {
     /** @type {number|null} */
     this.lastGoodAt = null;
     /** @type {number|null} */
+    this.measuredAt = null;
+    /** @type {number|null} */
     this.lastMovedAt = null;
     /** @type {ReturnType<typeof setTimeout>|null} */
     this.timer = null;
@@ -177,6 +195,7 @@ export class LiveFeed {
       reading: this.reading,
       failure: this.failure,
       lastGoodAt: this.lastGoodAt,
+      measuredAt: this.measuredAt,
       lastMovedAt: this.lastMovedAt,
       now,
     });
@@ -192,6 +211,10 @@ export class LiveFeed {
     const isNew = !previous || previous.observedAt !== reading.observedAt || delta > 0;
     this.reading = reading;
     this.lastGoodAt = this.now();
+    // Only a measurement the API has not sent before resets its age.
+    if (!previous || previous.receivedAt !== reading.receivedAt || this.measuredAt === null) {
+      this.measuredAt = measuredAtFor(reading, this.lastGoodAt);
+    }
     if (delta > 0) this.lastMovedAt = this.lastGoodAt;
     if (isNew) this.onReading(reading, delta, discontinuity);
   }

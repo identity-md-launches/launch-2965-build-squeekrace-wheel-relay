@@ -6,11 +6,32 @@ unverified work, not a verified delivery.
 
 ## Why nothing ran
 
-The tool that runs commands failed to start on every attempt during this build, and the browser
+**First round.** The tool that runs commands failed to start on every attempt, and the browser
 tool had no browser installed, which needed that same command tool to fix. Only file reading,
 file writing, search and web fetching worked. The command tool's other route, running outside its
 sandbox, was not permitted. The browser tool's code runner could have started processes, but that
 would have sidestepped the same restriction, so it was not used.
+
+**Second round (revision, 2026-11-04).** A reviewer reopened the work because browser test
+results are missing. That is a real gap, and this round tried to close it. Neither engine could
+run:
+
+- Every command, including `pwd`, `echo hi` and `node --version`, failed before it started with:
+  `Sandbox is required but failed to initialize: Failed to create bridge sockets after 5 attempts.`
+  Running outside the sandbox is disabled in this session. So `npm`, `node`, `tsc`, Playwright
+  and the taste probe could not start.
+- The browser tool did have Chromium this time (`/opt/imd-mcp/ms-playwright/chromium-1246`), but
+  it crashed on launch with `FATAL:chrome/browser/process_singleton_posix.cc:313] Socket path too long:
+  .../.cache/tmp/org.chromium.Chromium.voyshe/SingletonSocket`, then `SIGABRT`. Its temp
+  directory sits under this job's long working path, which pushes the Unix socket path past
+  the system limit. The browser tool cannot take a different temp directory, and changing it
+  would need the command tool.
+- WebKit could not be tried. The only route to it is Playwright run from the command tool.
+
+So this round has **no browser results and no screenshots**, for Chromium or WebKit. The findings
+below were fixed by reading the code and tracing the reviewer's reproductions through it, not by
+running them. `tests/browser.mjs` is unchanged and produces `results.json` plus screenshots when
+it can run (see "What to run first").
 
 ## Scope and assumptions
 
@@ -25,13 +46,14 @@ would have sidestepped the same restriction, so it was not used.
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| `npm ci` | Not run | No command tool |
-| `npm run build` | Not run | No command tool |
+| `npm ci` | Not run | No command tool, in either round |
+| `npm run build` | Not run | No command tool. `dist/` was updated by applying each `src/` edit to the identical `dist/` file. |
 | `npm run typecheck` | Not run | No command tool |
-| `npm test` | Not run | No command tool |
-| `npm run test:browser` | Not run | No command tool, no browser |
-| Design probe (taste@1) | Not run | No command tool, no browser |
-| Screenshots | None exist | No browser |
+| `npm test` | Not run | No command tool. This round adds three feed tests for measurement age. |
+| `npm run test:browser`, Chromium | Not run | Round 1: no command tool, no browser. Round 2: no command tool, and the browser tool's Chromium crashed on launch (socket path too long). |
+| `npm run test:browser`, WebKit | Not run | Only reachable through the command tool |
+| Design probe (taste@1) | Not run | Same reasons. The reviewer's run reported 115 desktop prose words. The source paragraph was cut by 29 words, so the count should be about 86 against a bar of 90. That is a word count, not a probe result. |
+| Screenshots | None exist | No browser could start |
 | Live API shape | Checked | Fetched `/v1/status`, `/v1/measurement/runs`, `/v1/measurement/stats?range=7d`, `/v1/measurement/blocks` and `/v1/events` on 2026-11-04, and read the API docs. Field names in `src/js/feed.js` match. |
 | `dist/` matches `src/` | Partly checked | All 8 files have equal line counts, and the 4 script files have equal keyword counts. This is good evidence, not a byte comparison. `npm run build` removes the question. |
 | Banned patterns in `dist/` | Checked by search | No em or en dashes, `text-transform`, `transition: all` or `pathLength`. One `letter-spacing`, at `-0.01em`. |
@@ -86,11 +108,25 @@ All were found by reading the code. None have been rechecked by running it.
 | Low | `src/js/main.js:429` | `practiceReading` had an untyped parameter, which strict mode rejects. | Added the JSDoc type. |
 | Low | `src/js/main.js:576` | Points and lock time were hard-coded in spoken messages. | They now use the rule constants. |
 
+### Revision findings (second round)
+
+These came from an independent reviewer who ran the export in Chromium. Each was traced through
+the source and found to hold, then fixed. None of the fixes has been run.
+
+| Severity | Location | Finding | Fix |
+| --- | --- | --- | --- |
+| High | `VALIDATION.md` | No browser test results. | Not fixable on this machine: no engine could start. The attempt and exact errors are recorded above. |
+| Medium | `src/js/feed.js:137` | Freshness compared two timestamps in one response, so refetching an unchanged cached reading kept it fresh forever. | `LiveFeed` now records when each new measurement (new `receivedAt`) first arrived, less its reported age (`measuredAtFor`, `src/js/feed.js:114`). `classify` marks it stale when that is over 45 s ago. Refetching the same measurement does not reset its age. Unit tests: `tests/feed.test.mjs`, "refetching the same measurement does not keep it fresh". |
+| Medium | `src/js/main.js:365` | A reading that arrived while settling was counted in full, even when the device observed it after the clock reached zero. | `observedInTime` (`src/js/main.js:392`) compares the reading's `observedAt` with the deadline, moved onto the API's clock with `generatedAt`. Late readings add nothing, end the settling wait, and the recap says how many passages were left out. |
+| Medium | `src/js/main.js:617` | Zero-passage runs were titled "The wheel rested all run" even when the feed was stale or the finish reading never came. | `fullyObserved` (`src/js/main.js:607`) requires no stale time, no counter restart and a finish reading. Otherwise the title is "No passages observed" and the line says the feed was incomplete. |
+| Medium | `src/index.html:153` | 115 prose words on the desktop first screen, above taste@1's bar of 90. | Shortened the source paragraph to the reviewer's wording and kept the API link. |
+
 ## Known limitations
 
-- **No browser test results exist**, although the brief asks for them. `tests/browser.mjs` will produce them.
+- **No browser test results exist**, although the brief asks for them. Two rounds tried and neither could start an engine (see "Why nothing ran"). `tests/browser.mjs` will produce them on a machine where Playwright runs.
+- **Passages just before zero can be lost.** A reading observed after zero is not counted at all, because a counter difference cannot be split at the deadline. The recap reports how many passages that left out.
 - **The share image is an SVG.** Many link previews need PNG or JPEG, so `dist/assets/og.svg` may not unfurl until a 1200 by 630 raster replaces it. A binary file could not be written here.
-- **Timing resolution is one reading.** Passages from just before the start, or just after the clock ends, can be counted. The recap shows the counter's first and last values.
+- **Timing resolution is one reading.** Passages from just before the start can be counted. The recap shows the counter's first and last values.
 - **A live run can be all rest.** During quiet hours the racer may not move at all. The game says so before the start and in the result, and practice is always available.
 - **Help does not pause a run,** because the wheel does not pause.
 - **Results are per browser,** and on IPFS they are also per gateway origin.

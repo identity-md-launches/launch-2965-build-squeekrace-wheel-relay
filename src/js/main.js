@@ -34,6 +34,8 @@ import { RACERS, racerArt, racerById } from './racers.js';
  * @property {number} countdownEndsAt
  * @property {number} startedAt
  * @property {number} endsAt
+ * @property {number} endsAtWall The same moment as `endsAt`, as a Date.now() timestamp.
+ * @property {number} lateIgnored Passages the device observed after the clock reached zero.
  * @property {number} settleDeadline
  * @property {number|null} finalSeenAt
  * @property {number} lastStepAt
@@ -362,18 +364,35 @@ function renderFeed() {
  */
 function handleReading(reading, delta, discontinuity) {
   const current = session;
-  if (current && current.run.mode === 'live') {
+  const counting = phase === 'racing' || (phase === 'settling' && current?.finalSeenAt === null);
+  if (current && current.run.mode === 'live' && counting) {
     const now = performance.now();
-    const counting = phase === 'racing' || (phase === 'settling' && current.finalSeenAt === null);
-    if (counting) {
+    if (observedInTime(current, reading)) {
       addPassages(current.run, delta, Math.min(current.run.seconds, (now - current.startedAt) / 1000));
       current.lastCount = reading.cumulative.toString();
       current.peakRpmMilli = Math.max(current.peakRpmMilli, reading.rpmMilli);
       if (discontinuity) current.gap = true;
-      if (phase === 'settling') current.finalSeenAt = now;
+    } else {
+      // Observed after zero. Its passages cannot be split at the deadline, so none of them count.
+      current.lateIgnored += delta;
     }
+    // Settling waits for one reading only. In time or late, nothing else can belong to the run.
+    if (phase === 'settling') current.finalSeenAt = now;
   }
   renderFeed();
+}
+
+/**
+ * True when the device observed this reading before the run's clock reached zero. The
+ * deadline is moved onto the API's clock with the response's generatedAt, so a phone whose
+ * clock is wrong still closes intake at the right moment.
+ * @param {Session} current
+ * @param {import('./feed.js').Reading} reading
+ */
+function observedInTime(current, reading) {
+  const apiOffset = Date.parse(reading.generatedAt) - Date.now();
+  const deadline = current.endsAtWall + (Number.isFinite(apiOffset) ? apiOffset : 0);
+  return Date.parse(reading.observedAt) <= deadline;
 }
 
 /**
@@ -397,6 +416,8 @@ function beginRun(mode) {
     countdownEndsAt: now + COUNTDOWN_MS,
     startedAt: 0,
     endsAt: 0,
+    endsAtWall: 0,
+    lateIgnored: 0,
     settleDeadline: 0,
     finalSeenAt: null,
     lastStepAt: now,
@@ -467,6 +488,7 @@ function update() {
     if (now < current.countdownEndsAt) return;
     current.startedAt = now;
     current.endsAt = now + current.run.seconds * 1000;
+    current.endsAtWall = Date.now() + current.run.seconds * 1000;
     current.nextPracticeAt = now + 800;
     current.firstCount = feed.snapshot().reading?.cumulative.toString() ?? null;
     current.lastCount = current.firstCount;
@@ -578,6 +600,15 @@ function onPass() {
 }
 
 /**
+ * True when the feed was fresh for the whole run, the counter never restarted and the
+ * finish reading arrived. Only then can a run with no passages say the wheel rested.
+ * @param {Session} current
+ */
+function fullyObserved(current) {
+  return current.stateMs.stale === 0 && !current.gap && current.finalSeenAt !== null;
+}
+
+/**
  * @param {Session} current
  * @param {number} legCount
  * @param {boolean} stopped
@@ -595,6 +626,12 @@ function resultCopy(current, legCount, stopped, isBest) {
     };
   }
   if (stopped) return { title: 'Run stopped', line: 'Stopped runs are not saved. Here is what the wheel did.' };
+  if (run.received === 0 && !fullyObserved(current)) {
+    return {
+      title: 'No passages observed',
+      line: 'The feed was incomplete, so wheel activity could not be verified. This run is still saved as live.',
+    };
+  }
   if (run.received === 0) {
     return {
       title: 'The wheel rested all run',
@@ -658,6 +695,10 @@ function recapLines(current, stopped) {
   }
   if (run.mode === 'live' && !stopped && current.finalSeenAt === null) {
     lines.push('The finish reading did not arrive in time, so the count ends at the last reading.');
+  }
+  if (run.mode === 'live' && current.lateIgnored > 0) {
+    const word = plural(current.lateIgnored, 'passage', 'passages');
+    lines.push(`${numberFormat.format(current.lateIgnored)} ${word} observed after the clock reached zero did not count.`);
   }
   if (current.gap) lines.push('The device counter restarted during this run. Passages across that gap are not counted.');
   return { lines, buckets };
