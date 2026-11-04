@@ -1,0 +1,30 @@
+[
+  {
+    "name": "chromium 320: main action on the first screen, no sideways scroll",
+    "ok": true
+  },
+  {
+    "name": "chromium 390: main action on the first screen, no sideways scroll",
+    "ok": true
+  },
+  {
+    "name": "chromium 1440: main action on the first screen, no sideways scroll",
+    "ok": true
+  },
+  {
+    "name": "chromium: passages from a reading move the racer and nothing else does",
+    "ok": true
+  },
+  {
+    "name": "chromium: a lost feed shows stale, blocks live runs and leaves practice open",
+    "ok": true
+  },
+  {
+    "name": "chromium: practice is labeled throughout, plays to a result and stays out of live results",
+    "ok": true
+  },
+  {
+    "name": "chromium: help opens, closes with Escape and returns focus",
+    "ok": true
+  }
+]

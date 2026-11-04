@@ -4,12 +4,10 @@ A browser game where your racer moves only when a real hamster runs. Pick a race
 run, and pass the baton as real accepted wheel passages carry your racer around the rim. It is a
 companion to [SqueekRace Arena](https://squeek-race.vercel.app/).
 
-> **Status: not yet run.** This code has never been executed, in Node or in a browser. In both
-> build rounds the tool that runs commands could not start, and in the second round the browser
-> tool's Chromium also crashed on launch. So `dist/` was written by hand as a copy of `src/`, and
-> no browser test results exist. The build, typecheck, tests and browser walk below are ready but
-> have not run. [`VALIDATION.md`](VALIDATION.md) has the full record and the exact errors. Run the
-> commands in [Check the game](#check-the-game) before you publish.
+The production export has been built and checked in this revision. Executed browser reports and
+screenshots ship in [`reports/browser/`](reports/browser/); [`VALIDATION.md`](VALIDATION.md)
+records the checks, design review and remaining limitations. Browser interaction tests use a
+scripted API so resting, running and stale states can be exercised reliably.
 
 ## How it plays
 
@@ -57,8 +55,8 @@ dependency, and it is used for the typecheck.
 npm ci
 ```
 
-`package-lock.json` was written by hand from the npm registry's record for `typescript@5.9.3`,
-because `npm` could not run. If `npm ci` rejects it, run `npm install` and commit the new lockfile.
+The existing lockfile pins `typescript@5.9.3`. A clean install of the unchanged manifest and
+lockfile was checked in a temporary directory during this revision.
 
 ## Preview
 
@@ -87,14 +85,19 @@ npm test               # rules and feed tests, Node only
 npm run test:browser   # walks dist/ with a scripted API; needs Playwright
 ```
 
-The browser walk needs Playwright with Chromium and WebKit installed:
+The browser walk needs an existing Playwright installation with Chromium, WebKit and their
+runtime dependencies. Set `IMD_PLAYWRIGHT` to that installation's `index.mjs` when the module is
+not on the project import path. `PLAYWRIGHT_BROWSERS_PATH` can select its browser cache.
 
 ```sh
-npm install --no-save playwright && npx playwright install chromium webkit
-node tests/browser.mjs --out test/scratch/browser
+node tests/browser.mjs --engine chromium --out reports/browser/chromium
+node tests/browser.mjs --engine webkit --out reports/browser/webkit
 ```
 
-With `--out`, it writes `results.json` and screenshots to that directory. To run the design probe:
+Omit `--engine` to run both in sequence. Each engine runs seven checks, including a full
+one-minute practice run, and `--out` saves `results.json` and six viewport screenshots. These
+are browser tests of the production export with a scripted API, not recordings of real wheel
+activity. To run the pinned design probe while its task input is present:
 
 ```sh
 node .imd/reads/skills/design-critic/scripts/taste.mjs --out test/scratch/taste
@@ -102,15 +105,23 @@ node .imd/reads/skills/design-critic/scripts/taste.mjs --out test/scratch/taste
 
 ## Results
 
-No check has run in either build round. See [`VALIDATION.md`](VALIDATION.md) for the errors.
+Executed on 2026-11-04 against the final `dist/`. See [`VALIDATION.md`](VALIDATION.md) for scope
+and commands. The evidence below is included in the handoff, outside temporary scratch space.
 
 | Check | Result |
 | --- | --- |
-| Production build | Not run. The command tool could not start. |
-| Typecheck | Not run. The command tool could not start. |
-| Unit tests | Not run. The command tool could not start. |
-| Browser tests (Chromium, WebKit) | Not run. The command tool could not start, and the browser tool's Chromium crashed on launch, so there are no browser results or screenshots. |
-| Design probe | Not run, for the same reasons |
+| Production build | Passed; `dist/` generated from `src/`. |
+| Typecheck | Passed with the pinned TypeScript 5.9.3. |
+| Unit tests | 38 passed, 0 failed. |
+| Chromium | [7 passed, 0 failed](reports/browser/chromium/results.json); [390×844](reports/browser/chromium/chromium-390-setup.png), [1440×900](reports/browser/chromium/chromium-1440-setup.png). |
+| WebKit | [7 passed, 0 failed](reports/browser/webkit/results.json); [390×844](reports/browser/webkit/webkit-390-setup.png), [1440×900](reports/browser/webkit/webkit-1440-setup.png). |
+| Design probe | [16/16 passed](reports/design/taste.json). First-screen prose: 34 words at 390, 84 at 1440. |
+
+Both engines also save 320×640 setup, 390×844 live movement, stale-feed and practice-result
+screenshots beside their reports. The unmocked design probe reached the API-unavailable state;
+live-service CORS and a real active-wheel run remain unverified. WebKit automation is not a
+physical iPhone or Safari test. The SVG share image may not unfurl on services that require a
+raster image.
 
 ## Project layout
 
@@ -126,6 +137,7 @@ src/            Source and everything the site ships
 dist/           Production export, a copy of src/
 scripts/        Build and preview
 tests/          Unit tests and the browser walk
+reports/        Executed browser reports, screenshots and measured design probe
 DESIGN.md       Design system
 VALIDATION.md   What was and was not checked
 ```

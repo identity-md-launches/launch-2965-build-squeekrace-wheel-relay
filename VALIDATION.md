@@ -1,134 +1,125 @@
 # Validation record
 
-**Completion: Incomplete.** The game is fully written, but none of it has been executed. The
-production build, typecheck, tests, browser checks and design probe all did not run, so this is
-unverified work, not a verified delivery.
+**Completion: Complete for the stated revision scope, 2026-11-04.** Both reported findings
+reproduced. The handoff now includes executed Chromium and WebKit reports and screenshots, and
+the desktop copy budget passes. These are worker measurements, not independent certification.
+This record supersedes the previous rounds' unavailable-check status.
 
-## Why nothing ran
+## Scope and changes
 
-**First round.** The tool that runs commands failed to start on every attempt, and the browser
-tool had no browser installed, which needed that same command tool to fix. Only file reading,
-file writing, search and web fetching worked. The command tool's other route, running outside its
-sandbox, was not permitted. The browser tool's code runner could have started processes, but that
-would have sidestepped the same restriction, so it was not used.
+- The existing browser-native ES module game is retained. Game rules, API integration, styling,
+  art, package manifest and lockfile are unchanged.
+- `src/index.html:147`: shortened the empty Live results prompt to “Finish your first live run.”
+  The adjacent browser-only storage and practice disclosure remains. The lower section keeps its
+  existing natural layout.
+- `tests/browser.mjs:18`: added optional `--engine chromium|webkit` selection so each engine can
+  save its own evidence. The seven existing checks and their assertions are unchanged; omitting
+  the option still runs both engines.
+- `dist/` was regenerated with the production build. Reports live in `reports/`, outside scratch
+  space, and are included with the source handoff.
 
-**Second round (revision, 2026-11-04).** A reviewer reopened the work because browser test
-results are missing. That is a real gap, and this round tried to close it. Neither engine could
-run:
+## Executed checks
 
-- Every command, including `pwd`, `echo hi` and `node --version`, failed before it started with:
-  `Sandbox is required but failed to initialize: Failed to create bridge sockets after 5 attempts.`
-  Running outside the sandbox is disabled in this session. So `npm`, `node`, `tsc`, Playwright
-  and the taste probe could not start.
-- The browser tool did have Chromium this time (`/opt/imd-mcp/ms-playwright/chromium-1246`), but
-  it crashed on launch with `FATAL:chrome/browser/process_singleton_posix.cc:313] Socket path too long:
-  .../.cache/tmp/org.chromium.Chromium.voyshe/SingletonSocket`, then `SIGABRT`. Its temp
-  directory sits under this job's long working path, which pushes the Unix socket path past
-  the system limit. The browser tool cannot take a different temp directory, and changing it
-  would need the command tool.
-- WebKit could not be tried. The only route to it is Playwright run from the command tool.
-
-So this round has **no browser results and no screenshots**, for Chromium or WebKit. The findings
-below were fixed by reading the code and tracing the reviewer's reproductions through it, not by
-running them. `tests/browser.mjs` is unchanged and produces `results.json` plus screenshots when
-it can run (see "What to run first").
-
-## Scope and assumptions
-
-- **Reviewed:** the single page in `src/`, with its setup, countdown, race, settling, result and help states.
-- **Export:** `dist/`, a hand-written copy of `src/`. `npm run build` is defined as that same copy.
-- **Stack:** plain ES modules with JSDoc types instead of Vite and React. With no way to run a bundler, a site that needs no compile step was the only way to deliver a real `dist/`.
-- **Live source:** `/v1/status`, not `/v1/measurement/runs`. The README explains why.
-- **Replay:** the replay button starts a new run with the same racer, length and mode. It does not play back the old run.
-- **Not included:** a shared leaderboard (static hosting cannot provide one), wallets, and hosting, which happens after this job.
-
-## Checks
-
-| Check | Result | Evidence |
+| Check | Actual result | Evidence |
 | --- | --- | --- |
-| `npm ci` | Not run | No command tool, in either round |
-| `npm run build` | Not run | No command tool. `dist/` was updated by applying each `src/` edit to the identical `dist/` file. |
-| `npm run typecheck` | Not run | No command tool |
-| `npm test` | Not run | No command tool. This round adds three feed tests for measurement age. |
-| `npm run test:browser`, Chromium | Not run | Round 1: no command tool, no browser. Round 2: no command tool, and the browser tool's Chromium crashed on launch (socket path too long). |
-| `npm run test:browser`, WebKit | Not run | Only reachable through the command tool |
-| Design probe (taste@1) | Not run | Same reasons. The reviewer's run reported 115 desktop prose words. The source paragraph was cut by 29 words, so the count should be about 86 against a bar of 90. That is a word count, not a probe result. |
-| Screenshots | None exist | No browser could start |
-| Live API shape | Checked | Fetched `/v1/status`, `/v1/measurement/runs`, `/v1/measurement/stats?range=7d`, `/v1/measurement/blocks` and `/v1/events` on 2026-11-04, and read the API docs. Field names in `src/js/feed.js` match. |
-| `dist/` matches `src/` | Partly checked | All 8 files have equal line counts, and the 4 script files have equal keyword counts. This is good evidence, not a byte comparison. `npm run build` removes the question. |
-| Banned patterns in `dist/` | Checked by search | No em or en dashes, `text-transform`, `transition: all` or `pathLength`. One `letter-spacing`, at `-0.01em`. |
-| Head tags | Checked by reading | `dist/index.html` has a title, favicon, description, `og:title` and `og:image`. |
-| Relative URLs | Checked by reading | Every local URL in `dist/index.html` starts with `./`. |
-| Rules and tests | Traced by hand | Each unit test was followed through the code by reading. This found nothing wrong in the tests, but it is not a test run. |
+| Clean dependency install | Passed: 1 package installed using copies of the unchanged manifest and lockfile in a temporary directory | `npm ci --prefix /tmp/wheel-relay-install-check --cache /tmp/wheel-relay-npm-cache --ignore-scripts --no-audit --no-fund` |
+| Production build | Passed, exit 0 | `npm run build`; [check output and export hashes](reports/checks.json) |
+| Typecheck | Passed, exit 0, TypeScript 5.9.3 | `npm exec --yes --cache /tmp/wheel-relay-npm-cache --package typescript@5.9.3 -- npm run typecheck`; [output](reports/checks.json) |
+| Unit tests | 38 passed, 0 failed, exit 0 | `npm test`; [TAP output](reports/checks.json) |
+| Chromium browser walk | 7 passed, 0 failed, exit 0 | [results.json](reports/browser/chromium/results.json) |
+| WebKit browser walk | 7 passed, 0 failed, exit 0 | [results.json](reports/browser/webkit/results.json) |
+| Pinned taste@1 design probe | 16/16 checks passed | [raw measured report](reports/design/taste.json), [390 screenshot](reports/design/390.png), [1440 screenshot](reports/design/1440.png) |
+| Source/export integrity | All 8 export files byte-identical to `src/`; local asset URLs relative | [file hashes and URLs](reports/checks.json) |
 
-### What to run first
+The first direct typecheck attempt could not resolve an executable `tsc`. Loading the locked
+version through a temporary npm cache resolved it; the final typecheck passed. Chromium used
+the provided Playwright runtime. WebKit was downloaded separately, with runtime packages
+extracted into temporary storage; its temporary launcher was adjusted to preserve the library
+search path. No browser binaries, runtime packages, dependency caches or repository
+`node_modules/` are included in the handoff.
+
+Browser commands, with the appropriate Playwright module and browser cache selected for each:
 
 ```sh
-npm ci && npm run build && npm run typecheck && npm test
-node tests/browser.mjs --out test/scratch/browser
+node tests/browser.mjs --engine chromium --out reports/browser/chromium
+node tests/browser.mjs --engine webkit --out reports/browser/webkit
+```
+
+The pinned design probe ran from the repository root, with the provided Playwright module,
+browser cache and a temporary browser-profile directory:
+
+```sh
 node .imd/reads/skills/design-critic/scripts/taste.mjs --out test/scratch/taste
 ```
 
-The tests themselves are also unrun, so a failure may be in a test rather than in the game.
+Its final `taste.json` and the two viewport screenshots were copied unchanged to `reports/design/`
+for the handoff. The task-provided probe itself is an input and is not part of the delivered source.
 
-## Risks to check first
+## Browser coverage and screenshots
 
-1. **The live counter has not been seen rising.** The wheel was resting during every fetch (the quiet window is roughly 08:00 to 20:30 UTC). The game assumes `cumulativeWorkUnits` updates with each accepted measurement, as the docs say. If it only moved when a round closes, racers would jump every ten minutes. Watch one live run during a busy period, usually around 21:00 to 23:30 UTC.
-2. **Reading cadence is inferred.** "About ten seconds" comes from segment timing while running. The idle interval looks like 30 seconds or less, from a few samples. The stale limit (45 s) and finish wait (14 s) depend on this.
-3. **CORS is taken from the docs.** No browser has called the API from another origin.
-4. **`dist/` could have a typing slip.** It was written out rather than generated.
+Both engines served the production `dist/` under `/preview/`, exercising IPFS-style relative
+asset paths. Each executed the same seven checks:
+
+1. Setup at 320×640: no horizontal scroll or script/local-resource failures.
+2. Setup at 390×844: main start action on the first screen, no horizontal scroll or script/local-resource failures.
+3. Setup at 1440×900: main start action on the first screen, no horizontal scroll or script/local-resource failures.
+4. Choose Bramble and start a live run. With an unchanged counter, passages stay at zero and the
+   wheel rests. A scripted increase of 15 accepted passages moves the racer and changes the state
+   to running. Stopping yields “Run stopped” and adds no live history entry.
+5. An API-stale response disables live starts, leaves practice enabled and recovers after a fresh response.
+6. A full one-minute practice run keeps its simulation label, accepts baton passes, reaches the
+   result and activity recap, stays out of live history, and replays into a new countdown.
+7. Help opens, Escape closes it and focus returns to the Help control.
+
+| View/state | Chromium | WebKit |
+| --- | --- | --- |
+| Setup, 320×640 | [screenshot](reports/browser/chromium/chromium-320-setup.png) | [screenshot](reports/browser/webkit/webkit-320-setup.png) |
+| Setup, 390×844 | [screenshot](reports/browser/chromium/chromium-390-setup.png) | [screenshot](reports/browser/webkit/webkit-390-setup.png) |
+| Setup, 1440×900 | [screenshot](reports/browser/chromium/chromium-1440-setup.png) | [screenshot](reports/browser/webkit/webkit-1440-setup.png) |
+| Live movement, 390×844 | [screenshot](reports/browser/chromium/chromium-390-live.png) | [screenshot](reports/browser/webkit/webkit-390-live.png) |
+| Stale feed, 390×844 | [screenshot](reports/browser/chromium/chromium-390-stale.png) | [screenshot](reports/browser/webkit/webkit-390-stale.png) |
+| Practice result, 390×844 | [screenshot](reports/browser/chromium/chromium-390-practice-result.png) | [screenshot](reports/browser/webkit/webkit-390-practice-result.png) |
+
+The browser walk intercepts the official API URL with scripted responses. These reports test
+the production UI and do not establish that real wheel activity occurred. The deliberately
+unavailable optional stats response is tolerated. Script errors and failed local requests are
+checked in the setup views and the full practice flow; this is not a blanket claim that every
+request in every state was audited.
 
 ## Better Interface review
 
-Review was by reading the source only, using each domain's "without a browser" checks. Every
-rendered check is **Not verified**.
+Reviewed the final source and rendered screenshots using the pinned guide's six domains. The
+wheel remains the page's visual center; the revision does not change the design system.
 
-| Domain | Coverage | Checked in source | Not verified |
-| --- | --- | --- | --- |
-| Accessibility | Checked, source only | Native buttons, links, radios and `<dialog>`; names on all controls; focus ring (`src/styles.css:122`); skip link; heading order; one status region; reduced motion and forced colors; state shown by text and icon, not color alone | Keyboard walk, focus visibility, accessibility tree, screen reader, automated audit, 200% zoom |
-| Layout | Checked, source only | Logical properties, safe-area insets, DOM order matches reading order, breakpoint from content, wrapping rows, no fixed text widths | All widths, overflow, whether Start is on the first screen, RTL |
-| Writing | Checked | Verb-first buttons, sentence case, one term per concept (passage, baton, leg), calm errors with a next step, empty state points forward, descriptive links | None. Source alone is enough for this domain. |
-| Typography | Checked, source only | Six sizes, two weights, one family, tabular numbers, line heights, wrap rules | Rendered wrapping, which font each device actually uses |
-| Colors | Checked, source only | Two-tier tokens, components use semantic tokens, one meaning per hue, one filled action per view | **All contrast ratios.** None were measured or computed, so none are claimed. |
-| UI | Checked, source only | Named transition properties, 150ms state changes, press scale 0.96, every state styled, flat surfaces | Motion in practice, racer art appearance |
+| Domain | Coverage and result | Limits |
+| --- | --- | --- |
+| Accessibility | Checked native roles/names through browser selectors, live-start disabled state, practice availability, dialog Escape and focus return. The probe passes control spacing/target checks. | No full keyboard-only walk, screen-reader session, automated accessibility audit or native 200% zoom test. |
+| Layout | Checked setup screenshots and measured zero horizontal overflow in both engines at 320, 390 and 1440. Product and both start controls are visible at 390×844. The probe also checks 320×700 and reports no text overlap, clipping or floating controls over text. | Intermediate widths, RTL and pseudo-localization not exercised. |
+| Writing | Checked the empty-state next action and retained storage/practice disclosure. Measured first-screen prose is 34 words at 390 and 84 at 1440. Live and practice labels stay distinct. | The short empty prompt is five words, so taste@1 excludes it from its six-word prose threshold. All visible text remains in the screenshots. |
+| Typography | Checked the existing six-token source scale, computed sizes, one requested family stack and two weights. Probe passes size, tracking and casing checks; screenshots show readable wrapping. | Actual fallback font varies by device; no font-file loading claim. |
+| Colors | Checked existing semantic tokens. The probe's measured entry-screen text/background pairs meet 4.5:1, or 3:1 for large text. Status text accompanies color. | No exhaustive contrast audit of dynamic race/result states, artwork or forced-colors mode. |
+| UI | Checked racer selection, countdown, movement, stop, stale/recovery, practice result, replay and dialog behavior. Probe passes surface and reduced-motion entry-state checks. | Racing motion under reduced motion and 10%-speed animation inspection were not performed. |
 
-The first-screen height at 390 wide was estimated at about 690px by adding up the CSS, with Start
-inside an 844px screen. That is an estimate, not a measurement. `tests/browser.mjs` asserts it.
+### Findings and rechecks
 
-### Findings and fixes
+| Finding | Reproduction | Fix and final recheck |
+| --- | --- | --- |
+| High fidelity, original `VALIDATION.md:31` and README Results | The previous handoff said browser checks had not run and supplied no reports/screenshots. | Executed both seven-check walks. Added separate real `results.json` files and six screenshots per engine; linked them above and in README Results. Both runs exit 0. |
+| Medium taste, `src/index.html:147` | Baseline taste@1 reproduced **97 desktop prose words**, above 90; 34 mobile words. The desktop screenshot confirmed the longer empty state and the footer entering the viewport. | Replaced only the empty prompt. Final probe measures **84 desktop / 34 mobile** and passes all 16 checks. The final desktop screenshot confirms the adjacent disclosure is intact and the lower section closes naturally. |
 
-All were found by reading the code. None have been rechecked by running it.
+## Remaining limitations
 
-| Severity | Location | Finding | Fix |
-| --- | --- | --- | --- |
-| High | `src/js/main.js:758` | `phase` stayed narrowed across `update()`, so the later comparison was expected to fail the typecheck. | Added `inRun()` (`src/js/main.js:269`), which keeps the check out of type narrowing. |
-| Medium | `src/js/main.js:659` | A stopped live run claimed the finish reading had not arrived. | The line now only appears for runs that reached the clock. |
-| Medium | `src/js/main.js:489` | A run ending on a resting wheel waited 14 seconds, then reported a missing reading. | A resting wheel now counts as nothing in flight, so the run ends promptly. |
-| Medium | `src/js/main.js:70` | `pathLength` on `<circle>` could not be tested in WebKit, and a failure would silently misplace the gold zones. | Removed. Dash lengths now use the real circumference. |
-| Low | `src/js/main.js:429` | `practiceReading` had an untyped parameter, which strict mode rejects. | Added the JSDoc type. |
-| Low | `src/js/main.js:576` | Points and lock time were hard-coded in spoken messages. | They now use the rule constants. |
-
-### Revision findings (second round)
-
-These came from an independent reviewer who ran the export in Chromium. Each was traced through
-the source and found to hold, then fixed. None of the fixes has been run.
-
-| Severity | Location | Finding | Fix |
-| --- | --- | --- | --- |
-| High | `VALIDATION.md` | No browser test results. | Not fixable on this machine: no engine could start. The attempt and exact errors are recorded above. |
-| Medium | `src/js/feed.js:137` | Freshness compared two timestamps in one response, so refetching an unchanged cached reading kept it fresh forever. | `LiveFeed` now records when each new measurement (new `receivedAt`) first arrived, less its reported age (`measuredAtFor`, `src/js/feed.js:114`). `classify` marks it stale when that is over 45 s ago. Refetching the same measurement does not reset its age. Unit tests: `tests/feed.test.mjs`, "refetching the same measurement does not keep it fresh". |
-| Medium | `src/js/main.js:365` | A reading that arrived while settling was counted in full, even when the device observed it after the clock reached zero. | `observedInTime` (`src/js/main.js:392`) compares the reading's `observedAt` with the deadline, moved onto the API's clock with `generatedAt`. Late readings add nothing, end the settling wait, and the recap says how many passages were left out. |
-| Medium | `src/js/main.js:617` | Zero-passage runs were titled "The wheel rested all run" even when the feed was stale or the finish reading never came. | `fullyObserved` (`src/js/main.js:607`) requires no stale time, no counter restart and a finish reading. Otherwise the title is "No passages observed" and the line says the feed was incomplete. |
-| Medium | `src/index.html:153` | 115 prose words on the desktop first screen, above taste@1's bar of 90. | Shortened the source paragraph to the reviewer's wording and kept the API link. |
-
-## Known limitations
-
-- **No browser test results exist**, although the brief asks for them. Two rounds tried and neither could start an engine (see "Why nothing ran"). `tests/browser.mjs` will produce them on a machine where Playwright runs.
-- **Passages just before zero can be lost.** A reading observed after zero is not counted at all, because a counter difference cannot be split at the deadline. The recap reports how many passages that left out.
-- **The share image is an SVG.** Many link previews need PNG or JPEG, so `dist/assets/og.svg` may not unfurl until a 1200 by 630 raster replaces it. A binary file could not be written here.
-- **Timing resolution is one reading.** Passages from just before the start can be counted. The recap shows the counter's first and last values.
-- **A live run can be all rest.** During quiet hours the racer may not move at all. The game says so before the start and in the result, and practice is always available.
-- **Help does not pause a run,** because the wheel does not pause.
-- **Results are per browser,** and on IPFS they are also per gateway origin.
-- **The lockfile was written by hand.** The `typescript@5.9.3` integrity value came from the npm registry but has not been checked by `npm ci`.
-- **No native device, screen reader or real-Safari check** has been done.
+- The unmocked design probe displayed the API-unavailable stale state. Browser CORS to the real
+  service and a complete timed run with an actively moving real wheel remain unverified. The
+  automated live scenario uses scripted readings and is stopped early; timed completion is
+  exercised through practice. API unavailability keeps live starts disabled and practice usable.
+- The counter's update cadence is still inferred from the API documentation and earlier samples;
+  this revision does not change the 45-second measurement-age limit or 14-second finish wait.
+- Counter sampling cannot split a batch at the start/deadline. The existing recap reports late
+  passages omitted from a run; passages just before the start can be included in a later batch.
+- Results are local to the browser and gateway origin. There is no shared leaderboard. Replay
+  starts a new run with the same settings; it does not play back the previous observations.
+- The share image remains SVG. The required metadata is present, but some link-preview services
+  require a raster image; no external unfurl was tested.
+- No physical-device, real Safari, screen-reader or deployed-IPFS gateway test was performed.
+  WebKit automation is engine coverage, not a substitute for those checks. Hosting follows review.

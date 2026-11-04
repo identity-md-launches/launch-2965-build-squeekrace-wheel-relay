@@ -1,7 +1,8 @@
 # SqueekRace Wheel Relay design
 
-Everything here is taken from the source in `src/`. The site has not been rendered yet, so
-statements about layout come from the CSS, not from observation. See `VALIDATION.md`.
+Everything here is taken from the final source in `src/`. The production export was rendered in
+Chromium and WebKit at 320, 390 and 1440 CSS pixels wide during this revision. Browser reports,
+screenshots and the six-domain review are linked from `VALIDATION.md`.
 
 ## Overview
 
@@ -42,7 +43,9 @@ components use only the semantic tier.
 | `--color-state-practice` | `--sky-300` | `#8fd8ff` | Everything simulated |
 
 Racer art colors are data, not interface tokens. They live with each racer in `src/js/racers.js`.
-There is one dark theme and no light theme. Contrast ratios have not been measured.
+There is one dark theme and no light theme. The pinned design probe measured the entry screen's
+solid text/background pairs and found they meet 4.5:1, or 3:1 for large text. This covers the
+measured entry state; it is not an audit of every dynamic state. See `reports/design/taste.json`.
 
 ## Typography
 
@@ -75,6 +78,10 @@ Spacing tokens: `--space-1` to `--space-12` (0.25rem to 3rem), with 0.5rem insid
 | 56rem and up | Two columns, `minmax(0, 1.15fr) minmax(20rem, 1fr)`, capped at 76rem. The wheel grows to `min(100%, 60svh)`. Buttons sit side by side and the lower sections form three columns. | `src/styles.css:804` |
 
 Direction-dependent spacing uses logical properties. Option rows use three equal columns.
+The final browser walk confirms no horizontal scroll at 320, 390 and 1440 in both engines.
+At 390×844, the wheel, racer choice, run length and both start buttons fit on the first screen.
+The empty Live results prompt is “Finish your first live run.” Its browser-only storage and
+practice exclusion disclosure stays directly below it; the lower section sizes naturally.
 
 ## Elevation & Depth
 

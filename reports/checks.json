@@ -1,0 +1,71 @@
+{
+  "at": "2026-11-04T10:45:27.538Z",
+  "results": [
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "stdout": "\n> squeekrace-wheel-relay@1.0.0 build\n> node scripts/build.mjs\n\nBuilt dist/ from src/\n"
+    },
+    {
+      "command": "npm exec --yes --cache /tmp/wheel-relay-npm-cache --package typescript@5.9.3 -- npm run typecheck",
+      "exitCode": 0,
+      "stdout": "\n> squeekrace-wheel-relay@1.0.0 typecheck\n> tsc -p tsconfig.json\n\n"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "stdout": "\n> squeekrace-wheel-relay@1.0.0 test\n> node --test tests/engine.test.mjs tests/feed.test.mjs\n\nTAP version 13\n# (node:90) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n# (Use `node --trace-warnings ...` to show where the warning was created)\n# Subtest: the racer does not move without passages\nok 1 - the racer does not move without passages\n  ---\n  duration_ms: 1.768866\n  type: 'test'\n  ...\n# Subtest: one passage is one pace\nok 2 - one passage is one pace\n  ---\n  duration_ms: 0.622148\n  type: 'test'\n  ...\n# Subtest: a batch plays out over time instead of jumping\nok 3 - a batch plays out over time instead of jumping\n  ---\n  duration_ms: 0.25653\n  type: 'test'\n  ...\n# Subtest: non-positive passage counts are ignored\nok 4 - non-positive passage counts are ignored\n  ---\n  duration_ms: 0.201557\n  type: 'test'\n  ...\n# Subtest: the racer stops at the line and later passages spill\nok 5 - the racer stops at the line and later passages spill\n  ---\n  duration_ms: 0.638028\n  type: 'test'\n  ...\n# Subtest: Mochi's cheeks save passages at the line and release them after the pass\nok 6 - Mochi's cheeks save passages at the line and release them after the pass\n  ---\n  duration_ms: 0.762796\n  type: 'test'\n  ...\n# Subtest: a clean pass scores the racer points and keeps the position\nok 7 - a clean pass scores the racer points and keeps the position\n  ---\n  duration_ms: 0.54334\n  type: 'test'\n  ...\n# Subtest: a late pass scores late points and frees the racer\nok 8 - a late pass scores late points and frees the racer\n  ---\n  duration_ms: 0.50003\n  type: 'test'\n  ...\n# Subtest: an early press locks the baton, then it unlocks\nok 9 - an early press locks the baton, then it unlocks\n  ---\n  duration_ms: 0.621896\n  type: 'test'\n  ...\n# Subtest: a pass cannot be repeated for the same line\nok 10 - a pass cannot be repeated for the same line\n  ---\n  duration_ms: 0.927303\n  type: 'test'\n  ...\n# Subtest: every passage is accounted for at all times\nok 11 - every passage is accounted for at all times\n  ---\n  duration_ms: 0.799448\n  type: 'test'\n  ...\n# Subtest: finish leaves whole numbers that add up to what was received\nok 12 - finish leaves whole numbers that add up to what was received\n  ---\n  duration_ms: 0.243145\n  type: 'test'\n  ...\n# Subtest: score is passages used plus baton points\nok 13 - score is passages used plus baton points\n  ---\n  duration_ms: 0.434939\n  type: 'test'\n  ...\n# Subtest: a run with no passages scores zero\nok 14 - a run with no passages scores zero\n  ---\n  duration_ms: 0.172235\n  type: 'test'\n  ...\n# Subtest: activity is bucketed across the run and clamped to its ends\nok 15 - activity is bucketed across the run and clamped to its ends\n  ---\n  duration_ms: 1.436943\n  type: 'test'\n  ...\n# Subtest: busiest reports the fullest slice, or null when nothing moved\nok 16 - busiest reports the fullest slice, or null when nothing moved\n  ---\n  duration_ms: 0.316256\n  type: 'test'\n  ...\n# (node:91) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n# (Use `node --trace-warnings ...` to show where the warning was created)\n# Subtest: parseStatus reads a live-shaped body\nok 17 - parseStatus reads a live-shaped body\n  ---\n  duration_ms: 2.206569\n  type: 'test'\n  ...\n# Subtest: parseStatus refuses anything it cannot trust\nok 18 - parseStatus refuses anything it cannot trust\n  ---\n  duration_ms: 1.427924\n  type: 'test'\n  ...\n# Subtest: compareReadings subtracts within one hardware counter epoch\nok 19 - compareReadings subtracts within one hardware counter epoch\n  ---\n  duration_ms: 0.358435\n  type: 'test'\n  ...\n# Subtest: compareReadings never counts across an epoch or a non-hardware reading\nok 20 - compareReadings never counts across an epoch or a non-hardware reading\n  ---\n  duration_ms: 0.530515\n  type: 'test'\n  ...\n# Subtest: compareReadings flags an older cached reading instead of counting it\nok 21 - compareReadings flags an older cached reading instead of counting it\n  ---\n  duration_ms: 0.263068\n  type: 'test'\n  ...\n# Subtest: classify: connecting, then stale when the first poll fails\nok 22 - classify: connecting, then stale when the first poll fails\n  ---\n  duration_ms: 0.393191\n  type: 'test'\n  ...\n# Subtest: classify: resting, running by rpm and running by recent passages\nok 23 - classify: resting, running by rpm and running by recent passages\n  ---\n  duration_ms: 0.245274\n  type: 'test'\n  ...\n# Subtest: classify: the API saying stale wins over rpm\nok 24 - classify: the API saying stale wins over rpm\n  ---\n  duration_ms: 0.212415\n  type: 'test'\n  ...\n# Subtest: classify: an old measurement reads as stale before the API says so\nok 25 - classify: an old measurement reads as stale before the API says so\n  ---\n  duration_ms: 0.64664\n  type: 'test'\n  ...\n# Subtest: classify: a measurement turns stale as it ages, even while polls succeed\nok 26 - classify: a measurement turns stale as it ages, even while polls succeed\n  ---\n  duration_ms: 0.639883\n  type: 'test'\n  ...\n# Subtest: LiveFeed: refetching the same measurement does not keep it fresh\nok 27 - LiveFeed: refetching the same measurement does not keep it fresh\n  ---\n  duration_ms: 4.859084\n  type: 'test'\n  ...\n# Subtest: LiveFeed: a new measurement resets the age\nok 28 - LiveFeed: a new measurement resets the age\n  ---\n  duration_ms: 0.655671\n  type: 'test'\n  ...\n# Subtest: classify: one failed poll is tolerated, a long gap is not\nok 29 - classify: one failed poll is tolerated, a long gap is not\n  ---\n  duration_ms: 0.253993\n  type: 'test'\n  ...\n# Subtest: LiveFeed reports the passages between readings, and a catch-up reading loses none\nok 30 - LiveFeed reports the passages between readings, and a catch-up reading loses none\n  ---\n  duration_ms: 0.597371\n  type: 'test'\n  ...\n# Subtest: LiveFeed does not repeat an unchanged reading\nok 31 - LiveFeed does not repeat an unchanged reading\n  ---\n  duration_ms: 0.372902\n  type: 'test'\n  ...\n# Subtest: LiveFeed turns a rejected request into a stale state\nok 32 - LiveFeed turns a rejected request into a stale state\n  ---\n  duration_ms: 0.427753\n  type: 'test'\n  ...\n# Subtest: LiveFeed records a 429 as rate limited\nok 33 - LiveFeed records a 429 as rate limited\n  ---\n  duration_ms: 1.28561\n  type: 'test'\n  ...\n# Subtest: nextActiveAt finds the next usually busy half hour today\nok 34 - nextActiveAt finds the next usually busy half hour today\n  ---\n  duration_ms: 1.015855\n  type: 'test'\n  ...\n# Subtest: nextActiveAt rolls over to tomorrow\nok 35 - nextActiveAt rolls over to tomorrow\n  ---\n  duration_ms: 0.2533\n  type: 'test'\n  ...\n# Subtest: nextActiveAt returns now during a busy half hour\nok 36 - nextActiveAt returns now during a busy half hour\n  ---\n  duration_ms: 0.208369\n  type: 'test'\n  ...\n# Subtest: nextActiveAt has no answer for an empty or silent pattern\nok 37 - nextActiveAt has no answer for an empty or silent pattern\n  ---\n  duration_ms: 0.200478\n  type: 'test'\n  ...\n# Subtest: parseStats derives wheel travel per passage and tolerates missing parts\nok 38 - parseStats derives wheel travel per passage and tolerates missing parts\n  ---\n  duration_ms: 0.332356\n  type: 'test'\n  ...\n1..38\n# tests 38\n# suites 0\n# pass 38\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 193.286686\n"
+    }
+  ],
+  "export": {
+    "identicalToSource": true,
+    "files": [
+      {
+        "path": "assets/favicon.svg",
+        "bytes": 355,
+        "sha256": "40bf7a8fbf24ae43b00ead161e7e72ee05cb630930974810a66bce04a5d23e3c"
+      },
+      {
+        "path": "assets/og.svg",
+        "bytes": 2127,
+        "sha256": "e90c9f790f0881fbd155ea135f982b4416bc9ee329da8ba7acd76c68e185d12a"
+      },
+      {
+        "path": "index.html",
+        "bytes": 9505,
+        "sha256": "2d0f51714e657356d7f076a1e755765e5a0575b8672f9b3fbc846b522a70bd8f"
+      },
+      {
+        "path": "js/engine.js",
+        "bytes": 5842,
+        "sha256": "23fb933e911f0027a54e25adcf57416944ec9e46ef4bbfd6837ae100956a07cd"
+      },
+      {
+        "path": "js/feed.js",
+        "bytes": 12320,
+        "sha256": "92b45f332db66a1cb1e27f0d8f7512b6b98a64484932766a732280d8505c76f4"
+      },
+      {
+        "path": "js/main.js",
+        "bytes": 31135,
+        "sha256": "5e67dde05412d91edcbc5ac9535af4c7ac3ba412a7aff7d44333c705e3eb31be"
+      },
+      {
+        "path": "js/racers.js",
+        "bytes": 2757,
+        "sha256": "e8ad8ccc3b468e43132e74fb83a6282cd30f28744ac64dbc88ae8a55954cf494"
+      },
+      {
+        "path": "styles.css",
+        "bytes": 17560,
+        "sha256": "f935133aa89f9a7ccb2b1af135c1cdfaea5e91850d49494a8a3d431fd9ee42ce"
+      }
+    ],
+    "relativeAssetUrls": [
+      "./assets/og.svg",
+      "./assets/favicon.svg",
+      "./styles.css",
+      "./js/main.js"
+    ]
+  }
+}

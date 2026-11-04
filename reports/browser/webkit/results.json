@@ -1,0 +1,30 @@
+[
+  {
+    "name": "webkit 320: main action on the first screen, no sideways scroll",
+    "ok": true
+  },
+  {
+    "name": "webkit 390: main action on the first screen, no sideways scroll",
+    "ok": true
+  },
+  {
+    "name": "webkit 1440: main action on the first screen, no sideways scroll",
+    "ok": true
+  },
+  {
+    "name": "webkit: passages from a reading move the racer and nothing else does",
+    "ok": true
+  },
+  {
+    "name": "webkit: a lost feed shows stale, blocks live runs and leaves practice open",
+    "ok": true
+  },
+  {
+    "name": "webkit: practice is labeled throughout, plays to a result and stays out of live results",
+    "ok": true
+  },
+  {
+    "name": "webkit: help opens, closes with Escape and returns focus",
+    "ok": true
+  }
+]

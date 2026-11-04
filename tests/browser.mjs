@@ -4,6 +4,7 @@
 //   npm run build
 //   node tests/browser.mjs            (needs `playwright`, or IMD_PLAYWRIGHT=/path/to/index.mjs)
 //   node tests/browser.mjs --out dir  (also writes results.json and screenshots to dir)
+//   node tests/browser.mjs --engine chromium|webkit --out dir  (one engine's evidence)
 //
 // A full practice run lasts about 65 seconds, so the walk takes around two minutes.
 import assert from 'node:assert/strict';
@@ -14,6 +15,9 @@ import { startPreview } from '../scripts/preview.mjs';
 
 const outIndex = process.argv.indexOf('--out');
 const out = outIndex > 0 ? process.argv[outIndex + 1] : null;
+const engineIndex = process.argv.indexOf('--engine');
+const engine = engineIndex > 0 ? process.argv[engineIndex + 1] : 'all';
+if (!['all', 'chromium', 'webkit'].includes(engine)) throw new Error('Use --engine chromium or --engine webkit');
 const module = process.env.IMD_PLAYWRIGHT ? pathToFileURL(process.env.IMD_PLAYWRIGHT).href : 'playwright';
 const { chromium, webkit } = await import(module);
 
@@ -188,8 +192,8 @@ async function walk(browserType, label) {
 
 const server = await startPreview(PORT);
 if (out) await mkdir(out, { recursive: true });
-await walk(chromium, 'chromium');
-await walk(webkit, 'webkit').catch((error) => {
+if (engine !== 'webkit') await walk(chromium, 'chromium');
+if (engine !== 'chromium') await walk(webkit, 'webkit').catch((error) => {
   results.push({ name: 'webkit walk', ok: false, error: String(error) });
   console.log(`FAIL webkit could not run: ${error}`);
 });
