@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#12152a"/>
+  <g transform="translate(860 315)">
+    <g stroke="#2a3058" stroke-width="10">
+      <line x1="0" y1="-210" x2="0" y2="210"/>
+      <line x1="-210" y1="0" x2="210" y2="0"/>
+      <line x1="-148" y1="-148" x2="148" y2="148"/>
+      <line x1="148" y1="-148" x2="-148" y2="148"/>
+    </g>
+    <circle r="120" fill="#1b2040"/>
+    <circle r="212" fill="none" stroke="#2a3058" stroke-width="36"/>
+    <path d="M212 0a212 212 0 0 1-60 148" fill="none" stroke="#ffc24b" stroke-width="36"/>
+    <path d="M-212 0a212 212 0 0 1 60-148" fill="none" stroke="#ffc24b" stroke-width="36"/>
+    <g transform="translate(-78 -296) scale(2.45)">
+      <circle cx="6" cy="29" r="3.5" fill="#e8a15c"/>
+      <ellipse cx="18" cy="44" rx="6.5" ry="3.2" fill="#fbe3c4"/>
+      <ellipse cx="37" cy="44" rx="6.5" ry="3.2" fill="#fbe3c4"/>
+      <ellipse cx="27" cy="29" rx="22" ry="15" fill="#e8a15c"/>
+      <ellipse cx="28" cy="34" rx="14" ry="9" fill="#fbe3c4"/>
+      <path d="M19 15 L33 42" stroke="#d9473c" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="46" cy="22" r="12.5" fill="#e8a15c"/>
+      <circle cx="40" cy="11.5" r="4.8" fill="#e8a15c"/>
+      <circle cx="40" cy="11.5" r="2.5" fill="#f2a7a0"/>
+      <circle cx="50" cy="27" r="4.5" fill="#fbe3c4"/>
+      <circle cx="50" cy="19" r="2.2" fill="#1b1730"/>
+      <circle cx="50.8" cy="18.2" r="0.7" fill="#ffffff"/>
+      <circle cx="58" cy="23" r="1.5" fill="#d9756b"/>
+      <rect x="49" y="33" width="14" height="4.5" rx="2.2" fill="#ffc24b" stroke="#1b1730" stroke-width="0.8" transform="rotate(-18 56 35)"/>
+    </g>
+  </g>
+  <g font-family="ui-rounded, 'Segoe UI', system-ui, sans-serif" fill="#f7f1e3">
+    <text x="72" y="250" font-size="84" font-weight="700">Wheel Relay</text>
+    <text x="72" y="320" font-size="40" fill="#cdcadd">A SqueekRace companion game</text>
+    <text x="72" y="400" font-size="36">Your racer moves only when</text>
+    <text x="72" y="448" font-size="36">a real hamster runs.</text>
+  </g>
+</svg>

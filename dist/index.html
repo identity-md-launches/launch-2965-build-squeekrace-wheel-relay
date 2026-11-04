@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>SqueekRace Wheel Relay</title>
+    <meta name="description" content="A timed relay where your racer moves only on real accepted wheel passages from the Squeekchain public API. A companion game to SqueekRace Arena." />
+    <meta name="theme-color" content="#12152a" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SqueekRace Wheel Relay" />
+    <meta property="og:description" content="Your racer moves only when a real hamster runs. Pick a racer, start a timed run and pass the baton." />
+    <meta property="og:image" content="./assets/og.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./js/main.js"></script>
+  </head>
+  <body data-phase="setup" data-mode="live">
+    <a class="skip" href="#game">Skip to the game</a>
+
+    <header class="topbar">
+      <h1 class="brand">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="4" />
+          <path d="M16 4a12 12 0 0 1 12 12" fill="none" stroke="#ffc24b" stroke-width="4" />
+          <circle cx="16" cy="16" r="3" fill="currentColor" />
+        </svg>
+        <span>SqueekRace Wheel Relay</span>
+      </h1>
+      <nav class="topnav" aria-label="Game links">
+        <a class="toplink" href="https://squeek-race.vercel.app/" rel="noopener">Grand Prix</a>
+        <button class="toplink" type="button" id="help-open">Help</button>
+      </nav>
+    </header>
+
+    <main class="stage" id="game" tabindex="-1">
+      <section class="arena" aria-label="Wheel track">
+        <p class="banner" id="practice-banner" hidden>Practice: simulated wheel, not real passages.</p>
+
+        <div class="scene" id="scene">
+          <svg class="wheel" viewBox="0 0 400 400" role="img" aria-label="A running wheel used as a track, with four gold baton zones on its rim and your racer on top.">
+            <g class="spokes" id="spokes">
+              <line x1="200" y1="56" x2="200" y2="344" />
+              <line x1="56" y1="200" x2="344" y2="200" />
+              <line x1="98" y1="98" x2="302" y2="302" />
+              <line x1="302" y1="98" x2="98" y2="302" />
+            </g>
+            <circle class="hub-disc" cx="200" cy="200" r="88" />
+            <g transform="rotate(-90 200 200)">
+              <circle class="rim" cx="200" cy="200" r="146" />
+              <circle class="zone" id="zone-0" cx="200" cy="200" r="146" />
+              <circle class="zone" id="zone-1" cx="200" cy="200" r="146" />
+              <circle class="zone" id="zone-2" cx="200" cy="200" r="146" />
+              <circle class="zone" id="zone-3" cx="200" cy="200" r="146" />
+              <circle class="progress" id="progress" cx="200" cy="200" r="146" stroke-dasharray="0 918" />
+            </g>
+            <g class="lines">
+              <line x1="200" y1="40" x2="200" y2="66" />
+              <line x1="334" y1="200" x2="360" y2="200" />
+              <line x1="200" y1="334" x2="200" y2="360" />
+              <line x1="40" y1="200" x2="66" y2="200" />
+            </g>
+            <g class="racer-on-rim" id="racer-on-rim">
+              <svg id="racer-art" x="174" y="4" width="52" height="39" viewBox="0 0 64 48" aria-hidden="true"></svg>
+            </g>
+          </svg>
+          <div class="hub">
+            <span class="hub-value" id="hub-value" data-kind="word">Checking</span>
+            <span class="hub-label" id="hub-label">live wheel</span>
+          </div>
+        </div>
+
+        <div class="feed" id="feed" data-state="connecting">
+          <p class="feed-title">
+            <svg class="feed-icon" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" /></svg>
+            <span id="feed-title">Checking the wheel…</span>
+          </p>
+          <p class="feed-detail" id="feed-detail">Reading the Squeekchain public API.</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Run controls">
+        <form class="setup" id="setup">
+          <p class="lede">Your racer moves only when a real hamster runs.</p>
+
+          <fieldset class="choice">
+            <legend>Choose a racer</legend>
+            <div class="racer-grid" id="racer-grid"></div>
+            <p class="trait" id="racer-trait"></p>
+          </fieldset>
+
+          <fieldset class="choice">
+            <legend>Run length</legend>
+            <div class="seg">
+              <label class="seg-item"><input type="radio" name="seconds" value="60" /><span>1 min</span></label>
+              <label class="seg-item"><input type="radio" name="seconds" value="120" checked /><span>2 min</span></label>
+              <label class="seg-item"><input type="radio" name="seconds" value="300" /><span>5 min</span></label>
+            </div>
+          </fieldset>
+
+          <div class="actions">
+            <button class="btn btn-primary" type="submit" id="start-live" aria-describedby="feed-detail" disabled>Start live run</button>
+            <button class="btn btn-secondary" type="button" id="start-practice">Start practice run</button>
+          </div>
+        </form>
+
+        <div class="race" id="race" hidden>
+          <dl class="hud">
+            <div><dt>Time left</dt><dd id="hud-time">2:00</dd></div>
+            <div><dt>Passages</dt><dd id="hud-passages">0</dd></div>
+            <div><dt>Legs</dt><dd id="hud-legs">0</dd></div>
+            <div><dt>Score</dt><dd id="hud-score">0</dd></div>
+          </dl>
+          <p class="hint" id="race-hint">Pass the baton when your racer reaches the gold zone.</p>
+          <div class="actions">
+            <button class="btn btn-pass" type="button" id="pass" data-ready="no">Pass baton</button>
+            <button class="btn btn-secondary" type="button" id="stop">Stop run</button>
+          </div>
+        </div>
+
+        <div class="result" id="result" hidden>
+          <h2 class="result-title" id="result-title" tabindex="-1"></h2>
+          <p class="result-line" id="result-line"></p>
+          <dl class="stats" id="result-stats"></dl>
+
+          <h3 class="recap-title">Observed activity</h3>
+          <div class="bars" id="result-bars" role="img"></div>
+          <p class="bars-axis"><span>Start</span><span>Finish</span></p>
+          <ul class="recap" id="recap-list"></ul>
+          <p class="source" id="recap-source">
+            Device-signed readings from the Squeekchain public API on Sepolia, not chain-certified work.
+            <a href="https://docs.squeekchain.com/developers/api/" rel="noopener">Read the API docs</a>
+          </p>
+
+          <div class="actions">
+            <button class="btn btn-primary" type="button" id="replay">Replay</button>
+            <button class="btn btn-secondary" type="button" id="change">Change racer</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="lower">
+      <section class="lower-block" aria-labelledby="live-results-title">
+        <h2 id="live-results-title">Live results</h2>
+        <ol class="history" id="history" hidden></ol>
+        <p class="note" id="history-empty">No live runs yet. Finish a live run to keep its score here.</p>
+        <p class="note">Saved in this browser only. Practice runs are never added.</p>
+      </section>
+
+      <section class="lower-block" aria-labelledby="source-title">
+        <h2 id="source-title">Where the passages come from</h2>
+        <p class="note">
+          A sensor on a real wheel records one accepted passage each time a magnet passes and the device’s checks hold.
+          Wheel Relay reads that running total from the official
+          <a href="https://docs.squeekchain.com/developers/api/" rel="noopener">Squeekchain public API</a>.
+          Readings land about every ten seconds, so your racer plays each batch out smoothly.
+        </p>
+      </section>
+
+      <section class="lower-block" aria-labelledby="companion-title">
+        <h2 id="companion-title">Want to steer?</h2>
+        <p class="note">Wheel Relay is a companion to SqueekRace Arena, where you drive against two AI rivals.</p>
+        <p class="note"><a href="https://squeek-race.vercel.app/" rel="noopener">Play the Squeek Grand Prix</a></p>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <p>Free to play. No wallet, no tokens and no prizes.</p>
+    </footer>
+
+    <dialog class="help" id="help" aria-labelledby="help-title">
+      <h2 id="help-title">How a run works</h2>
+      <ol class="help-steps">
+        <li>Choose a racer and a run length, then start the run.</li>
+        <li>Each accepted wheel passage moves your racer one pace around the rim.</li>
+        <li>Pass the baton while your racer is in the gold zone. Passing early locks the baton for 2 seconds.</li>
+        <li>Miss the zone and your racer stops at the line. Passages that arrive while it waits are lost until you pass.</li>
+        <li>Your score is passages used plus baton points.</li>
+      </ol>
+      <p class="note">When the wheel rests, your racer waits with it. Practice uses a simulated wheel so you can learn the timing at any hour.</p>
+      <form method="dialog">
+        <button class="btn btn-secondary" type="submit">Close help</button>
+      </form>
+    </dialog>
+
+    <div class="sr" role="status" id="announcer"></div>
+    <noscript><p class="noscript">Wheel Relay needs JavaScript to read the live wheel.</p></noscript>
+  </body>
+</html>

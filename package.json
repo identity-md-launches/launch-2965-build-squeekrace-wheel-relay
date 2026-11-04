@@ -1,0 +1,17 @@
+{
+  "name": "squeekrace-wheel-relay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A live relay game driven by real accepted wheel passages from the Squeekchain public API.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/preview.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test tests/engine.test.mjs tests/feed.test.mjs",
+    "test:browser": "node tests/browser.mjs"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

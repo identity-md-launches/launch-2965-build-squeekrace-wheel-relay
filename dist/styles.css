@@ -1,0 +1,901 @@
+/* SqueekRace Wheel Relay. Tokens first: components use only the semantic tier. */
+
+:root {
+  color-scheme: dark;
+
+  /* Primitives */
+  --ink-950: #12152a;
+  --ink-900: #1b2040;
+  --ink-800: #2a3058;
+  --ink-500: #7780b8;
+  --cream-100: #f7f1e3;
+  --cream-300: #cdcadd;
+  --marigold-400: #ffc24b;
+  --marigold-200: #ffe2a6;
+  --mint-400: #5fe3a9;
+  --lilac-300: #c3b4ff;
+  --coral-400: #ff9a7a;
+  --sky-300: #8fd8ff;
+
+  /* Semantic colors */
+  --color-bg-page: var(--ink-950);
+  --color-bg-surface: var(--ink-900);
+  --color-bg-control: var(--ink-800);
+  --color-border-control: var(--ink-500);
+  --color-text-primary: var(--cream-100);
+  --color-text-secondary: var(--cream-300);
+  --color-text-on-accent: var(--ink-950);
+  --color-accent-solid: var(--marigold-400);
+  --color-accent-hover: var(--marigold-200);
+  --color-link: var(--marigold-200);
+  --color-focus: var(--cream-100);
+  --color-state-running: var(--mint-400);
+  --color-state-resting: var(--lilac-300);
+  --color-state-stale: var(--coral-400);
+  --color-state-practice: var(--sky-300);
+
+  /* Type: one family, two weights, six sizes */
+  --font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --weight-regular: 400;
+  --weight-bold: 700;
+  --text-caption: 0.8125rem;
+  --text-body-sm: 0.9375rem;
+  --text-body: 1.0625rem;
+  --text-title: 1.375rem;
+  --text-value: 2rem;
+  --text-display: 3rem;
+
+  /* Space */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+
+  /* Shape and motion */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --control-height: 3rem;
+  --ease-state: cubic-bezier(0.2, 0, 0, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100svh;
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+p,
+ol,
+ul,
+dl,
+dd,
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+fieldset {
+  border: 0;
+  min-inline-size: 0;
+}
+
+ol,
+ul {
+  list-style: none;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+a {
+  color: var(--color-link);
+  text-decoration-line: underline;
+  text-underline-offset: 0.15em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+main:focus,
+h2:focus {
+  outline: none;
+}
+
+.sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-2);
+  z-index: 10;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-bg-control);
+  border-radius: var(--radius-sm);
+  transform: translateY(-200%);
+}
+
+.skip:focus {
+  transform: none;
+}
+
+.noscript {
+  padding: var(--space-4);
+  text-align: center;
+}
+
+/* Header: name at the leading edge, utilities at the trailing edge */
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  padding-block: max(var(--space-2), env(safe-area-inset-top)) var(--space-1);
+  padding-inline: max(var(--space-4), env(safe-area-inset-left)) max(var(--space-4), env(safe-area-inset-right));
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body);
+  font-weight: var(--weight-bold);
+  line-height: 1.2;
+}
+
+.brand-mark {
+  flex: none;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+}
+
+.topnav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-inline-end: calc(var(--space-2) * -1);
+}
+
+.toplink {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  padding-inline: var(--space-2);
+  border: 0;
+  background: none;
+  color: var(--color-link);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  text-decoration-line: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+/* Stage: scene and controls. One column until the content has room for two. */
+
+.stage {
+  display: grid;
+  gap: var(--space-3);
+  padding-inline: max(var(--space-4), env(safe-area-inset-left)) max(var(--space-4), env(safe-area-inset-right));
+  padding-block-end: var(--space-6);
+}
+
+.arena,
+.panel {
+  min-inline-size: 0;
+}
+
+.arena {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+}
+
+.banner {
+  inline-size: 100%;
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-state-practice);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-on-accent);
+  font-size: var(--text-body-sm);
+  font-weight: var(--weight-bold);
+  text-align: center;
+}
+
+.scene {
+  position: relative;
+  inline-size: min(100%, clamp(11rem, 29vh, 22rem));
+  inline-size: min(100%, clamp(11rem, 29svh, 22rem));
+  aspect-ratio: 1;
+}
+
+.wheel {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+}
+
+.spokes line {
+  stroke: var(--color-bg-control);
+  stroke-width: 6;
+}
+
+.hub-disc {
+  fill: var(--color-bg-surface);
+}
+
+.rim,
+.zone,
+.progress {
+  fill: none;
+}
+
+.rim {
+  stroke: var(--color-bg-control);
+  stroke-width: 24;
+}
+
+.zone {
+  stroke: var(--color-accent-solid);
+  stroke-width: 24;
+  opacity: 0.4;
+  transition: opacity 150ms var(--ease-state);
+}
+
+.zone.is-next {
+  opacity: 1;
+}
+
+.progress {
+  stroke: var(--color-text-primary);
+  stroke-width: 6;
+}
+
+.lines line {
+  stroke: var(--color-text-primary);
+  stroke-width: 4;
+}
+
+body[data-mode="practice"] .rim {
+  stroke: var(--color-state-practice);
+  stroke-dasharray: 5.73 5.73;
+}
+
+.hub {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.hub-value {
+  font-size: var(--text-value);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.hub-value[data-kind="word"] {
+  font-size: var(--text-body);
+}
+
+.hub-label {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+  line-height: 1.2;
+}
+
+/* Feed state: always text plus an icon shape, never color alone */
+
+.feed {
+  inline-size: 100%;
+  text-align: center;
+}
+
+.feed-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body);
+  font-weight: var(--weight-bold);
+  line-height: 1.3;
+}
+
+.feed-icon {
+  flex: none;
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  fill: var(--feed-color);
+}
+
+.feed {
+  --feed-color: var(--color-text-secondary);
+}
+
+.feed[data-state="running"] {
+  --feed-color: var(--color-state-running);
+}
+
+.feed[data-state="resting"] {
+  --feed-color: var(--color-state-resting);
+}
+
+.feed[data-state="stale"] {
+  --feed-color: var(--color-state-stale);
+}
+
+.feed[data-state="practice"] {
+  --feed-color: var(--color-state-practice);
+}
+
+.feed[data-state="resting"] .feed-icon,
+.feed[data-state="connecting"] .feed-icon {
+  fill: none;
+  stroke: var(--feed-color);
+  stroke-width: 2;
+}
+
+.feed-detail {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
+/* Setup */
+
+.setup,
+.race,
+.result {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.lede {
+  font-size: var(--text-body-sm);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.choice legend {
+  padding: 0;
+  margin-block-end: var(--space-1);
+  font-size: var(--text-body-sm);
+  font-weight: var(--weight-bold);
+}
+
+.racer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.racer-card,
+.seg-item {
+  position: relative;
+  display: block;
+}
+
+.racer-card input,
+.seg-item input {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.racer-face {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-1);
+  background: var(--color-bg-surface);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-sm);
+  line-height: 1.2;
+  transition: border-color 150ms var(--ease-state), background-color 150ms var(--ease-state);
+}
+
+.racer-face svg {
+  inline-size: 3rem;
+  block-size: 2.25rem;
+}
+
+.racer-card input:checked + .racer-face {
+  background: var(--color-bg-control);
+  border-color: var(--color-accent-solid);
+  font-weight: var(--weight-bold);
+}
+
+.racer-card input:focus-visible + .racer-face,
+.seg-item input:focus-visible + span {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.trait {
+  min-block-size: 1.25rem;
+  margin-block-start: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+  line-height: 1.35;
+}
+
+.seg {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.seg-item span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 2.75rem;
+  background: var(--color-bg-surface);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-sm);
+  transition: border-color 150ms var(--ease-state), background-color 150ms var(--ease-state);
+}
+
+.seg-item input:checked + span {
+  background: var(--color-bg-control);
+  border-color: var(--color-accent-solid);
+  font-weight: var(--weight-bold);
+}
+
+/* Buttons */
+
+.actions {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  min-block-size: var(--control-height);
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: var(--text-body);
+  font-weight: var(--weight-bold);
+  line-height: 1.2;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 150ms var(--ease-state), border-color 150ms var(--ease-state), color 150ms var(--ease-state), scale 150ms var(--ease-state);
+}
+
+.btn:active:not(:disabled) {
+  scale: 0.96;
+}
+
+.btn-primary {
+  background: var(--color-accent-solid);
+  color: var(--color-text-on-accent);
+}
+
+.btn-secondary {
+  background: var(--color-bg-control);
+  border-color: var(--color-border-control);
+  color: var(--color-text-primary);
+}
+
+.btn:disabled {
+  background: var(--color-bg-surface);
+  border-color: var(--color-bg-control);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}
+
+.btn-pass {
+  min-block-size: 4rem;
+  background: var(--color-bg-control);
+  border-color: var(--color-border-control);
+  color: var(--color-text-primary);
+}
+
+.btn-pass[data-ready="zone"] {
+  background: var(--color-accent-solid);
+  border-color: var(--color-accent-solid);
+  color: var(--color-text-on-accent);
+}
+
+.btn-pass[data-ready="line"] {
+  background: var(--color-state-stale);
+  border-color: var(--color-state-stale);
+  color: var(--color-text-on-accent);
+}
+
+.btn-pass[aria-disabled="true"] {
+  background: var(--color-bg-surface);
+  border-color: var(--color-bg-control);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}
+
+@media (hover: hover) {
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    border-color: var(--color-text-primary);
+  }
+
+  .racer-card:hover .racer-face,
+  .seg-item:hover span {
+    border-color: var(--color-border-control);
+  }
+
+  .racer-card:hover input:checked + .racer-face,
+  .seg-item:hover input:checked + span {
+    border-color: var(--color-accent-solid);
+  }
+}
+
+/* Race */
+
+.hud,
+.stats {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.hud {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
+}
+
+.hud dt,
+.stats dt {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+  line-height: 1.3;
+}
+
+.hud dd,
+.stats dd {
+  font-size: var(--text-title);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.hint {
+  min-block-size: 3rem;
+  font-size: var(--text-body-sm);
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
+.racer-on-rim.is-moving .foot-front,
+.racer-on-rim.is-moving .foot-back {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Result */
+
+.result-title {
+  font-size: var(--text-value);
+  font-weight: var(--weight-bold);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.result-line {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  text-wrap: pretty;
+}
+
+.recap-title {
+  margin-block-start: var(--space-2);
+  font-size: var(--text-body);
+  font-weight: var(--weight-bold);
+}
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  block-size: 4.5rem;
+}
+
+.bar {
+  flex: 1 1 0;
+  min-block-size: 2px;
+  background: var(--color-state-running);
+  border-start-start-radius: 2px;
+  border-start-end-radius: 2px;
+}
+
+.bar[data-empty="true"] {
+  background: var(--color-bg-control);
+}
+
+body[data-mode="practice"] .bar:not([data-empty="true"]) {
+  background: var(--color-state-practice);
+}
+
+.bars-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-block-start: calc(var(--space-2) * -1);
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+
+.recap {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-body-sm);
+}
+
+.source {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+
+/* Below the game */
+
+.lower {
+  display: grid;
+  gap: var(--space-8);
+  padding-block: var(--space-6);
+  padding-inline: max(var(--space-4), env(safe-area-inset-left)) max(var(--space-4), env(safe-area-inset-right));
+}
+
+.lower-block {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  max-inline-size: 38rem;
+}
+
+.lower-block h2 {
+  font-size: var(--text-title);
+  font-weight: var(--weight-bold);
+  line-height: 1.2;
+}
+
+.note {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  text-wrap: pretty;
+}
+
+.history {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.history-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 var(--space-3);
+  font-size: var(--text-body-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.history-score {
+  font-weight: var(--weight-bold);
+}
+
+.history-meta {
+  color: var(--color-text-secondary);
+}
+
+.footer {
+  padding-block: var(--space-4) max(var(--space-6), env(safe-area-inset-bottom));
+  padding-inline: max(var(--space-4), env(safe-area-inset-left)) max(var(--space-4), env(safe-area-inset-right));
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+
+/* Help */
+
+.help {
+  inline-size: min(34rem, calc(100vw - 2rem));
+  max-block-size: calc(100vh - 2rem);
+  padding: var(--space-6);
+  background: var(--color-bg-surface);
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  overscroll-behavior: contain;
+}
+
+.help::backdrop {
+  background: rgb(8 10 22 / 0.72);
+}
+
+.help h2 {
+  margin-block-end: var(--space-3);
+  font-size: var(--text-title);
+  line-height: 1.2;
+}
+
+.help-steps {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-end: var(--space-3);
+  padding-inline-start: var(--space-6);
+  list-style: decimal;
+  font-size: var(--text-body-sm);
+}
+
+.help form {
+  margin-block-start: var(--space-4);
+}
+
+/* The compact result keeps its heading near the top of a phone. */
+
+@media (max-width: 55.99rem) {
+  body[data-phase="result"] .scene {
+    inline-size: 9rem;
+  }
+
+  body[data-phase="result"] .hub-value {
+    font-size: var(--text-body);
+  }
+}
+
+/* Two columns once the panel has room beside a useful wheel. */
+
+@media (min-width: 56rem) {
+  .topbar,
+  .stage,
+  .lower,
+  .footer {
+    max-inline-size: 76rem;
+    margin-inline: auto;
+  }
+
+  .topbar {
+    padding-block-end: var(--space-3);
+  }
+
+  .stage {
+    grid-template-columns: minmax(0, 1.15fr) minmax(20rem, 1fr);
+    gap: var(--space-12);
+    align-items: start;
+  }
+
+  .scene {
+    inline-size: min(100%, 60vh);
+    inline-size: min(100%, 60svh);
+  }
+
+  .hub-value {
+    font-size: var(--text-display);
+  }
+
+  .hub-value[data-kind="word"] {
+    font-size: var(--text-value);
+  }
+
+  .hub-label {
+    font-size: var(--text-body-sm);
+  }
+
+  .feed-detail {
+    font-size: var(--text-body-sm);
+  }
+
+  .lede {
+    font-size: var(--text-title);
+    font-weight: var(--weight-bold);
+    line-height: 1.2;
+    text-align: start;
+  }
+
+  .lower {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .race .actions {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+/* Motion is opt-in. The racer's position is game state and always updates. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .racer-on-rim.is-moving .foot-front {
+    animation: step 240ms linear infinite alternate;
+  }
+
+  .racer-on-rim.is-moving .foot-back {
+    animation: step 240ms linear infinite alternate-reverse;
+  }
+
+  @keyframes step {
+    from {
+      transform: translateY(-1.5px);
+    }
+
+    to {
+      transform: translateY(1px);
+    }
+  }
+}
+
+@media (forced-colors: active) {
+  .btn,
+  .racer-face,
+  .seg-item span {
+    border-color: ButtonText;
+  }
+
+  .racer-card input:checked + .racer-face,
+  .seg-item input:checked + span {
+    border-color: Highlight;
+  }
+}
